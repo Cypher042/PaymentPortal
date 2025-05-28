@@ -1,8 +1,11 @@
 package cypher.ayush.payment.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import cypher.ayush.payment.model.*;
 import cypher.ayush.payment.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,18 +20,31 @@ import java.util.Optional;
 @RequestMapping("/v1/payments")
 public class ExtendedPaymentController {
 
-    private static final String STORAGE_DIR = "uploaded_images";
+    @Value("${file.storage-dir}")
+    private String storageDir;
 
     @Autowired
     private PaymentRepository paymentRepository;
 
     @PostMapping(value = "/create", consumes = {"multipart/form-data"})
-    public PaymentType createPayment(@RequestParam("payment_type") String type,
-                                     @RequestPart("data") Map<String, String> data,
-                                     @RequestPart("file") MultipartFile file) throws IOException {
-        Files.createDirectories(Paths.get(STORAGE_DIR));
-        String filename = STORAGE_DIR + "/" + StringUtils.cleanPath(file.getOriginalFilename());
-        file.transferTo(new File(filename));
+    public PaymentType createPayment(
+            @RequestParam("payment_type") String type,
+            @RequestPart("data") String dataJSON,
+            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+                
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, String> data = mapper.readValue(dataJSON, new TypeReference<>() {});
+
+        Files.createDirectories(Paths.get(storageDir));
+        if (file != null && !file.isEmpty()) {
+            // private string hi = data.get("payee").trim();
+            // Files.createDirectories(Paths.get(STORAGE_DIR));
+            String filedir = storageDir + "/" + StringUtils.cleanPath(data.get("payee").replaceAll("\\s+", ""));
+            Files.createDirectories(Paths.get(filedir));
+            String filename = storageDir + "/" + StringUtils.cleanPath(data.get("payee").replaceAll("\\s+", ""))+ "/" + StringUtils.cleanPath(file.getOriginalFilename()) + " " + StringUtils.cleanPath(data.get("amount").trim()) ;
+            file.transferTo(new File(filename));
+        }
+
 
         PaymentType payment = switch (type.toUpperCase()) {
             case "CREDIT_CARD" -> {
