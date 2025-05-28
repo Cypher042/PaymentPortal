@@ -2,7 +2,9 @@ package cypher.ayush.payment.controller;
 
 import cypher.ayush.payment.model.User;
 import cypher.ayush.payment.repository.UserRepository;
+import cypher.ayush.payment.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,16 +34,15 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody Map<String, String> credentials) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
         Authentication auth = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(credentials.get("username"), credentials.get("password")));
 
-        // System.err.println("User logged in: " + credentials.get("username"));
         if (auth.isAuthenticated()) {
-            System.err.println("Authentication successful for user: " + credentials.get("username"));
+            String token = JwtUtil.generateToken(credentials.get("username"));
+            return ResponseEntity.ok(Map.of("token", token));
         } else {
-            System.err.println("Authentication failed for user: " + credentials.get("username"));
+            return ResponseEntity.status(401).body("Invalid credentials");
         }
-        return auth.isAuthenticated() ? "Login successful" : "Invalid credentials";
     }
 }
