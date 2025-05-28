@@ -1,4 +1,3 @@
-
 package cypher.ayush.payment.model;
 
 import jakarta.persistence.*;
