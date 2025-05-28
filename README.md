@@ -8,7 +8,7 @@ A payment Portal api made in spring boot
 
 
 ```bash
-docker-compose up --build
+docker compose up 
 ```
 
 Visit:  
