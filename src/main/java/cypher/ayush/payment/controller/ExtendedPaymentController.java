@@ -15,6 +15,7 @@ import java.nio.file.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/v1/payments")
@@ -41,7 +42,10 @@ public class ExtendedPaymentController {
             // Files.createDirectories(Paths.get(STORAGE_DIR));
             String filedir = storageDir + "/" + StringUtils.cleanPath(data.get("payee").replaceAll("\\s+", ""));
             Files.createDirectories(Paths.get(filedir));
-            String filename = storageDir + "/" + StringUtils.cleanPath(data.get("payee").replaceAll("\\s+", ""))+ "/" + StringUtils.cleanPath(file.getOriginalFilename()) + " " + StringUtils.cleanPath(data.get("amount").trim()) ;
+            String originalFilename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+            String safeFilename = originalFilename.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+
+            String filename = storageDir + "/" + StringUtils.cleanPath(data.get("payee").replaceAll("\\s+", ""))+ "/" + StringUtils.cleanPath(safeFilename) + " " + StringUtils.cleanPath(data.get("amount").trim()) ;
             file.transferTo(new File(filename));
         }
 
